@@ -167,3 +167,39 @@ image_augmentation = keras.Sequential(
         layers.RandomContrast(0.3),
     ]
 )
+
+
+"""
+## Building a `tf.data.Dataset` pipeline for training
+We will generate pairs of images and corresponding captions using a `tf.data.Dataset` object.
+The pipeline consists of two steps:
+1. Read the image from the disk
+2. Tokenize all the five captions corresponding to the image
+"""
+
+
+def decode_and_resize(img_path):
+    img = tf.io.read_file(img_path)
+    img = tf.image.decode_jpeg(img, channels=3)
+    img = tf.image.resize(img, IMAGE_SIZE)
+    img = tf.image.convert_image_dtype(img, tf.float32)
+    return img
+
+
+def process_input(img_path, captions):
+    return decode_and_resize(img_path), vectorization(captions)
+
+
+def make_dataset(images, captions):
+    dataset = tf.data.Dataset.from_tensor_slices((images, captions))
+    dataset = dataset.shuffle(len(images))
+    dataset = dataset.map(process_input, num_parallel_calls=AUTOTUNE)
+    dataset = dataset.batch(BATCH_SIZE).prefetch(AUTOTUNE)
+
+    return dataset
+
+
+# Pass the list of images and the list of corresponding captions
+train_dataset = make_dataset(list(train_data.keys()), list(train_data.values()))
+
+valid_dataset = make_dataset(list(valid_data.keys()), list(valid_data.values()))
