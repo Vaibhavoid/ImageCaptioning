@@ -130,3 +130,40 @@ captions_mapping, text_data = load_captions_data("Flickr8k.token.txt")
 train_data, valid_data = train_val_split(captions_mapping)
 print("Number of training samples: ", len(train_data))
 print("Number of validation samples: ", len(valid_data))
+
+
+
+## Vectorizing the text data
+"""
+We'll use the `TextVectorization` layer to vectorize the text data,
+that is to say, to turn the original strings into integer sequences where each integer represents the index of
+a word in a vocabulary. We will use a custom string standardization scheme (strip punctuation characters except `<` and `>`) and the default
+splitting scheme (split on whitespace).
+"""
+
+
+def custom_standardization(input_string):
+    lowercase = tf.strings.lower(input_string)
+    return tf.strings.regex_replace(lowercase, "[%s]" % re.escape(strip_chars), "")
+
+
+strip_chars = "!\"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
+strip_chars = strip_chars.replace("<", "")
+strip_chars = strip_chars.replace(">", "")
+
+vectorization = TextVectorization(
+    max_tokens=VOCAB_SIZE,
+    output_mode="int",
+    output_sequence_length=SEQ_LENGTH,
+    standardize=custom_standardization,
+)
+vectorization.adapt(text_data)
+
+# Data augmentation for image data
+image_augmentation = keras.Sequential(
+    [
+        layers.RandomFlip("horizontal"),
+        layers.RandomRotation(0.2),
+        layers.RandomContrast(0.3),
+    ]
+)
