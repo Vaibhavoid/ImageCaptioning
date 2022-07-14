@@ -203,3 +203,28 @@ def make_dataset(images, captions):
 train_dataset = make_dataset(list(train_data.keys()), list(train_data.values()))
 
 valid_dataset = make_dataset(list(valid_data.keys()), list(valid_data.values()))
+
+
+"""
+## Building the model
+Our image captioning architecture consists of three models:
+1. A CNN: used to extract the image features
+2. A TransformerEncoder: The extracted image features are then passed to a Transformer
+                    based encoder that generates a new representation of the inputs
+3. A TransformerDecoder: This model takes the encoder output and the text data
+                    (sequences) as inputs and tries to learn to generate the caption.
+"""
+
+
+def get_cnn_model():
+    base_model = efficientnet.EfficientNetB0(
+        input_shape=(*IMAGE_SIZE, 3),
+        include_top=False,
+        weights="imagenet",
+    )
+    # We freeze our feature extractor
+    base_model.trainable = False
+    base_model_out = base_model.output
+    base_model_out = layers.Reshape((-1, base_model_out.shape[-1]))(base_model_out)
+    cnn_model = keras.models.Model(base_model.input, base_model_out)
+    return cnn_model
