@@ -485,3 +485,18 @@ class ImageCaptioningModel(keras.Model):
         # called automatically.
         return [self.loss_tracker, self.acc_tracker]
 
+# Create a learning rate schedule
+num_train_steps = len(train_dataset) * EPOCHS
+num_warmup_steps = num_train_steps // 15
+lr_schedule = LRSchedule(post_warmup_learning_rate=1e-4, warmup_steps=num_warmup_steps)
+
+# Compile the model
+caption_model.compile(optimizer=keras.optimizers.Adam(lr_schedule), loss=cross_entropy)
+
+# Fit the model
+caption_model.fit(
+    train_dataset,
+    epochs=EPOCHS,
+    validation_data=valid_dataset,
+    callbacks=[early_stopping],
+)
